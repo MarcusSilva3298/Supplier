@@ -5,19 +5,44 @@ import {
   Body,
   Patch,
   Param,
-  Delete
+  Delete,
+  UsePipes,
+  HttpException
 } from '@nestjs/common'
+import { hash } from 'bcryptjs'
+import { ICreateUserDTO } from './dtos/ICreateUserDTO'
+import { IUpdateUserDTO } from './dtos/IUpdateUserDTO'
+import { CreateUserPipe } from './pipes/users-create.pipe'
 import { UsersService } from './users.service'
-import { CreateUserDto } from './dto/create-user.dto'
-import { UpdateUserDto } from './dto/update-user.dto'
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto)
+  @UsePipes(CreateUserPipe)
+  async create(@Body() { name, email, password }: ICreateUserDTO) {
+    const userExists = await this.usersService.findByEmail(email)
+
+    if (userExists) {
+      throw new HttpException('Email already in use', 400)
+    }
+
+    const hashPassword = await hash(password, 6)
+
+    const user = await this.usersService.create({
+      name,
+      email,
+      password: hashPassword
+    })
+
+    delete user.password
+
+    return {
+      message: 'User created',
+      number: 200,
+      user
+    }
   }
 
   @Get()
@@ -27,11 +52,11 @@ export class UsersController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id)
+    return this.usersService.findByID(id)
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  update(@Param('id') id: string, @Body() updateUserDto: IUpdateUserDTO) {
     return this.usersService.update(+id, updateUserDto)
   }
 
