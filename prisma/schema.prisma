@@ -17,6 +17,58 @@ model User {
   email    String @unique
   password String
 
+  unit     Unit[]
+  business Business[]
+  supplier Supplier[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Business {
+  id String @id
+
+  name     String
+  nickname String  @unique
+  cnpj     String  @unique
+  address  String?
+
+  units Unit[]
+
+  owner    User   @relation(references: [id], fields: [owner_id])
+  owner_id String
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Unit {
+  id String @id
+
+  name    String
+  address String?
+
+  business    Business @relation(references: [id], fields: [business_id])
+  business_id String
+
+  owner    User   @relation(references: [id], fields: [owner_id])
+  owner_id String
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Supplier {
+  id String @id
+
+  name     String
+  nickname String  @unique
+  cnpj     String  @unique
+  address  String?
+
+  owner    User   @relation(references: [id], fields: [owner_id])
+  owner_id String
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }
