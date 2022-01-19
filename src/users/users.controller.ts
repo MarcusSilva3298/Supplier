@@ -7,10 +7,12 @@ import {
   Param,
   Delete,
   UsePipes,
-  HttpException
+  HttpException,
+  Query
 } from '@nestjs/common'
 import { hash } from 'bcryptjs'
 import { ICreateUserDTO } from './dtos/ICreateUserDTO'
+import { IListUserDTO } from './dtos/IListUserDTO'
 import { IUpdateUserDTO } from './dtos/IUpdateUserDTO'
 import { CreateUserPipe } from './pipes/users-create.pipe'
 import { UsersService } from './users.service'
@@ -40,24 +42,50 @@ export class UsersController {
 
     return {
       message: 'User created',
-      number: 200,
+      status: 200,
       user
     }
   }
 
   @Get()
-  findAll() {
-    return this.usersService.findAll()
+  async findAll(@Query() { name, email }: IListUserDTO) {
+    const users = await this.usersService.findAll({ name, email })
+
+    return {
+      message: users.length > 0 ? 'Users Found' : 'None User Found',
+      status: 200,
+      users: users.map((user) => {
+        delete user.password
+
+        return user
+      })
+    }
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findByID(id)
+  async findOne(@Param('id') id: string) {
+    const user = await this.usersService.findByID(id)
+
+    delete user.password
+
+    return {
+      message: user ? 'User Found' : 'None User Found',
+      status: 200,
+      user
+    }
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: IUpdateUserDTO) {
-    return this.usersService.update(+id, updateUserDto)
+  async update(@Param('id') id: string, @Body() { name }: IUpdateUserDTO) {
+    const user = await this.usersService.update(id, { name })
+
+    delete user.password
+
+    return {
+      message: 'User Updated',
+      status: 200,
+      user
+    }
   }
 
   @Delete(':id')

@@ -4,6 +4,7 @@ import { ICreateUserDTO } from './dtos/ICreateUserDTO'
 import { IUpdateUserDTO } from './dtos/IUpdateUserDTO'
 import { v4 } from 'uuid'
 import { User } from './entities/user.entity'
+import { IListUserDTO } from './dtos/IListUserDTO'
 
 @Injectable()
 export class UsersService {
@@ -20,8 +21,13 @@ export class UsersService {
     })
   }
 
-  findAll() {
-    return `This action returns all users`
+  async findAll({ name, email }: IListUserDTO) {
+    return await this.prisma.user.findMany({
+      where: {
+        name: { contains: name },
+        email: { contains: email }
+      }
+    })
   }
 
   async findByID(id: string): Promise<User> {
@@ -36,8 +42,11 @@ export class UsersService {
     })
   }
 
-  update(id: number, updateUserDto: IUpdateUserDTO) {
-    return `This action updates a #${id} user`
+  async update(id: string, { name }: IUpdateUserDTO) {
+    return await this.prisma.user.update({
+      where: { id },
+      data: { name }
+    })
   }
 
   remove(id: number) {
